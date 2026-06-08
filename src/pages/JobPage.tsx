@@ -40,6 +40,9 @@ const JobPage: React.FC = () => {
   const [newJobLabel, setNewJobLabel] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
+  const [localDescriptions, setLocalDescriptions] = useState<
+    Record<string, string>
+  >({});
 
   // Load from Supabase (if enabled) on mount
   useEffect(() => {
@@ -195,6 +198,24 @@ const JobPage: React.FC = () => {
     }
   };
 
+  const handleLocalDescriptionChange = (id: string, value: string) => {
+    setLocalDescriptions((prev) => ({ ...prev, [id]: value }));
+  };
+
+  const handleDescriptionBlur = (id: string) => {
+    const pending = localDescriptions[id];
+    const job = jobs.find((j) => j.id === id);
+    const text = pending !== undefined ? pending : job?.description || "";
+    if (job && text !== job.description) {
+      updateDescription(id, text);
+    }
+    setLocalDescriptions((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
+  };
+
   const startEditing = (job: Job) => {
     setEditingId(job.id);
     setEditLabel(job.label);
@@ -341,10 +362,11 @@ const JobPage: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Add a description or note..."
-                      value={job.description}
+                      value={localDescriptions[job.id] ?? job.description}
                       onChange={(e) =>
-                        updateDescription(job.id, e.target.value)
+                        handleLocalDescriptionChange(job.id, e.target.value)
                       }
+                      onBlur={() => handleDescriptionBlur(job.id)}
                       className={`w-full px-3 py-2 text-sm border border-transparent hover:border-gray-200 focus:border-gray-300 focus:outline-none focus:bg-gray-50 rounded transition-colors ${
                         job.completed ? "text-gray-400" : "text-gray-600"
                       }`}

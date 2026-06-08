@@ -40,6 +40,9 @@ const TodoListPage: React.FC = () => {
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
+  const [localDescriptions, setLocalDescriptions] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     localStorage.setItem("makarim_tasks", JSON.stringify(tasks));
@@ -63,6 +66,7 @@ const TodoListPage: React.FC = () => {
           const created = await createTaskApi({
             label: newTask.label,
             completed: false,
+            description: newTask.description,
           });
           if (created) {
             setTasks((prev) => [
@@ -123,15 +127,47 @@ const TodoListPage: React.FC = () => {
   };
 
   const updateDescription = (id: string, newDescription: string) => {
-    // Tasks table doesn't have a `description` column, so keep description local-only
-    setTasks(
-      tasks.map((t) => {
-        if (t.id === id) {
-          return { ...t, description: newDescription };
+    // use local buffer while typing; actual save happens on blur
+    setLocalDescriptions((prev) => ({ ...prev, [id]: newDescription }));
+  };
+
+  const handleDescriptionBlur = async (id: string) => {
+    const pending = localDescriptions[id];
+    const task = tasks.find((t) => t.id === id);
+    const text = pending !== undefined ? pending : task?.description || "";
+    if (task && text !== task.description) {
+      if (isSupabaseEnabled) {
+        try {
+          const res = await updateTaskApi(id, { description: text });
+          if (res)
+            setTasks((prev) =>
+              prev.map((t) =>
+                t.id === id
+                  ? {
+                      ...(res as Task),
+                      description: (res as any).description || "",
+                    }
+                  : t,
+              ),
+            );
+        } catch (e) {
+          console.error(e);
+          setTasks((prev) =>
+            prev.map((t) => (t.id === id ? { ...t, description: text } : t)),
+          );
         }
-        return t;
-      }),
-    );
+      } else {
+        setTasks((prev) =>
+          prev.map((t) => (t.id === id ? { ...t, description: text } : t)),
+        );
+      }
+    }
+
+    setLocalDescriptions((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
   };
 
   const startEditing = (task: Task) => {
@@ -182,7 +218,7 @@ const TodoListPage: React.FC = () => {
             setTasks(
               remote.map((r) => ({
                 ...(r as Task),
-                description: "",
+                description: (r as any).description || "",
               })) as Task[],
             );
           }
@@ -304,10 +340,11 @@ const TodoListPage: React.FC = () => {
                     <input
                       type="text"
                       placeholder="Add a description or note..."
-                      value={task.description}
+                      value={localDescriptions[task.id] ?? task.description}
                       onChange={(e) =>
                         updateDescription(task.id, e.target.value)
                       }
+                      onBlur={() => handleDescriptionBlur(task.id)}
                       className={`w-full px-3 py-2 text-sm border border-transparent hover:border-gray-200 focus:border-gray-300 focus:outline-none focus:bg-gray-50 rounded transition-colors ${
                         task.completed ? "text-gray-400" : "text-gray-600"
                       }`}

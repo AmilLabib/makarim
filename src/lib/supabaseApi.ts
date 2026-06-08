@@ -12,6 +12,7 @@ export type Task = {
   id: string;
   label: string;
   completed: boolean;
+  description?: string;
   created_at?: string;
 };
 
