@@ -13,6 +13,7 @@ export type Task = {
   label: string;
   completed: boolean;
   description?: string;
+  due_date?: string | null;
   created_at?: string;
 };
 

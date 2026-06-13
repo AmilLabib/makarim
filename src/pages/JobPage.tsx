@@ -44,25 +44,67 @@ const JobPage: React.FC = () => {
     Record<string, string>
   >({});
 
-  // Load from Supabase (if enabled) on mount
+  // Load from Supabase (if enabled) on mount, then apply daily reset
   useEffect(() => {
     let mounted = true;
     async function load() {
+      let loadedJobs: Job[] | null = null;
+
       if (isSupabaseEnabled) {
         try {
           const remote = await fetchJobs();
           if (!mounted) return;
           if (remote && remote.length > 0) {
-            setJobs(
-              remote.map((r) => ({
-                ...r,
-                description: (r as any).description || "",
-              })) as Job[],
-            );
+            loadedJobs = remote.map((r) => ({
+              ...r,
+              description: (r as any).description || "",
+            })) as Job[];
           }
         } catch (e) {
           console.error("Failed to fetch jobs from Supabase", e);
         }
+      }
+
+      if (!mounted) return;
+
+      // Daily reset logic — runs after data is loaded
+      const today = new Date().toDateString();
+      const lastVisited = localStorage.getItem("makarim_jobs_last_visited");
+      const needsReset = lastVisited !== today;
+
+      if (loadedJobs) {
+        if (needsReset) {
+          const resetJobs = loadedJobs.map((j) => ({ ...j, completed: false }));
+          setJobs(resetJobs);
+          // Sync reset to Supabase
+          if (isSupabaseEnabled) {
+            for (const job of resetJobs) {
+              if (job.completed !== false) {
+                updateJobApi(job.id, { completed: false }).catch((e) =>
+                  console.error("Failed to reset job in Supabase", e),
+                );
+              }
+            }
+            // Reset all that were completed
+            for (const job of loadedJobs) {
+              if (job.completed) {
+                updateJobApi(job.id, { completed: false }).catch((e) =>
+                  console.error("Failed to reset job in Supabase", e),
+                );
+              }
+            }
+          }
+        } else {
+          setJobs(loadedJobs);
+        }
+      } else if (needsReset) {
+        setJobs((prevJobs) =>
+          prevJobs.map((job) => ({ ...job, completed: false })),
+        );
+      }
+
+      if (needsReset) {
+        localStorage.setItem("makarim_jobs_last_visited", today);
       }
     }
     load();
@@ -75,19 +117,6 @@ const JobPage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("makarim_jobs", JSON.stringify(jobs));
   }, [jobs]);
-
-  // Daily Reset Logic (local-first)
-  useEffect(() => {
-    const today = new Date().toDateString();
-    const lastVisited = localStorage.getItem("makarim_jobs_last_visited");
-
-    if (lastVisited !== today) {
-      setJobs((prevJobs) =>
-        prevJobs.map((job) => ({ ...job, completed: false })),
-      );
-      localStorage.setItem("makarim_jobs_last_visited", today);
-    }
-  }, []);
 
   const completedCount = jobs.filter((j) => j.completed).length;
 
