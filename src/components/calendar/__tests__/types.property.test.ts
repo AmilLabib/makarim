@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
-import { formatMonthYear, truncateLabel, getNextColor, COLOR_PRESETS } from "../types";
+import { formatMonthYear, truncateLabel } from "../types";
 
 /**
  * Property 3: Indonesian locale month/year formatting

@@ -10,7 +10,7 @@ import {
   prevMonth,
 } from "../utils";
 import type { CalendarItemData, CalendarEvent } from "../types";
-import { getNextColor, COLOR_PRESETS, truncateLabel } from "../types";
+import { getNextColor, COLOR_PRESETS } from "../types";
 import type { Task } from "../../../lib/supabaseApi";
 
 /**
