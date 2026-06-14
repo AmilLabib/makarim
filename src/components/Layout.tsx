@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, CheckSquare, CalendarCheck, Briefcase } from "lucide-react";
+import { LayoutDashboard, CheckSquare, CalendarCheck, Briefcase, Calendar } from "lucide-react";
 
 const Layout: React.FC = () => {
   const location = useLocation();
@@ -16,6 +16,7 @@ const Layout: React.FC = () => {
     { path: "/todos", label: "Tasks", icon: <CheckSquare size={18} /> },
     { path: "/jobs", label: "Jobs", icon: <Briefcase size={18} /> },
     { path: "/absen", label: "Absen", icon: <CalendarCheck size={18} /> },
+    { path: "/calendar", label: "Calendar", icon: <Calendar size={18} /> },
   ];
 
   return (

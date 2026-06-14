@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import TodoListPage from "./pages/TodoListPage";
 import JobPage from "./pages/JobPage";
 import AbsenPage from "./pages/Absen";
+import CalendarPage from "./pages/CalendarPage";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="todos" element={<TodoListPage />} />
           <Route path="jobs" element={<JobPage />} />
           <Route path="absen" element={<AbsenPage />} />
+          <Route path="calendar" element={<CalendarPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
