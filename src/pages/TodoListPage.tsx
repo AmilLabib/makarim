@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Check, X, Calendar } from "lucide-react";
+import { Plus, Trash2, Edit2, Check, X, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import {
   fetchTasks,
   createTask as createTaskApi,
@@ -63,6 +63,8 @@ const TodoListPage: React.FC = () => {
 
   const [newTaskLabel, setNewTaskLabel] = useState("");
   const [newTaskDueDate, setNewTaskDueDate] = useState("");
+  const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [showNewTaskDetail, setShowNewTaskDetail] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [editDueDate, setEditDueDate] = useState("");
@@ -82,7 +84,7 @@ const TodoListPage: React.FC = () => {
       id: Date.now().toString(),
       label: newTaskLabel.trim(),
       completed: false,
-      description: "",
+      description: newTaskDescription.trim(),
       due_date: newTaskDueDate || null,
     };
 
@@ -92,13 +94,13 @@ const TodoListPage: React.FC = () => {
           const created = await createTaskApi({
             label: newTask.label,
             completed: false,
-            description: newTask.description,
+            description: newTask.description || undefined,
             due_date: newTask.due_date,
           });
           if (created) {
             setTasks((prev) => [
               ...prev,
-              { ...(created as Task), description: "", due_date: (created as any).due_date || null },
+              { ...(created as Task), description: (created as any).description || "", due_date: (created as any).due_date || null },
             ]);
           } else {
             setTasks((prev) => [...prev, newTask]);
@@ -114,6 +116,8 @@ const TodoListPage: React.FC = () => {
 
     setNewTaskLabel("");
     setNewTaskDueDate("");
+    setNewTaskDescription("");
+    setShowNewTaskDetail(false);
   };
 
   const deleteTask = async (id: string) => {
@@ -307,17 +311,54 @@ const TodoListPage: React.FC = () => {
             Add Task
           </button>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar size={16} className="text-gray-400" />
-          <input
-            type="date"
-            value={newTaskDueDate}
-            onChange={(e) => setNewTaskDueDate(e.target.value)}
-            className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm text-gray-600"
-            placeholder="Due date (optional)"
-          />
-          <span className="text-xs text-gray-400">Deadline (optional)</span>
-        </div>
+
+        {/* Toggle detail section */}
+        <button
+          type="button"
+          onClick={() => setShowNewTaskDetail(!showNewTaskDetail)}
+          className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          {showNewTaskDetail ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          {showNewTaskDetail ? "Sembunyikan detail" : "Tambah detail (deskripsi, deadline)"}
+        </button>
+
+        <AnimatePresence>
+          {showNewTaskDetail && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-3 overflow-hidden"
+            >
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Deskripsi (opsional)
+                </label>
+                <textarea
+                  placeholder="Tambah deskripsi atau catatan..."
+                  value={newTaskDescription}
+                  onChange={(e) => setNewTaskDescription(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm resize-none"
+                  rows={3}
+                />
+              </div>
+
+              {/* Due Date */}
+              <div className="flex items-center gap-2">
+                <Calendar size={16} className="text-gray-400" />
+                <input
+                  type="date"
+                  value={newTaskDueDate}
+                  onChange={(e) => setNewTaskDueDate(e.target.value)}
+                  className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm text-gray-600"
+                />
+                <span className="text-xs text-gray-400">Deadline (optional)</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </form>
 
       {/* Task List */}

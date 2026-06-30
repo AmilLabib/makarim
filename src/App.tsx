@@ -5,6 +5,7 @@ import TodoListPage from "./pages/TodoListPage";
 import JobPage from "./pages/JobPage";
 import AbsenPage from "./pages/Absen";
 import CalendarPage from "./pages/CalendarPage";
+import HealthPage from "./pages/HealthPage";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="jobs" element={<JobPage />} />
           <Route path="absen" element={<AbsenPage />} />
           <Route path="calendar" element={<CalendarPage />} />
+          <Route path="health" element={<HealthPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
